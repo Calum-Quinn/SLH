@@ -1,0 +1,14 @@
+# Build artifacts
+/target/
+
+# Runtime data
+/data/
+/image/
+/tmp
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

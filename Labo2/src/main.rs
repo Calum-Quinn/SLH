@@ -11,7 +11,7 @@ use rocket::{
     form::Form,
     fs::TempFile,
     get,
-    http::{Cookie, CookieJar, SameSite},
+    http::{Cookie, CookieJar},
     main, post,
     response::Redirect,
     routes,
@@ -32,12 +32,12 @@ struct GitHub;
 // This route calls `get_redirect`, which sets up a token request and
 // returns a `Redirect` to the authorization endpoint.
 #[get("/login/github")]
-fn github_login(oauth2: todo!(), cookies: &CookieJar<'_>) -> Redirect {
+fn github_login(oauth2: OAuth2<GitHub>, cookies: &CookieJar<'_>) -> Redirect {
     // We want the "user:read" scope. For some providers, scopes may be
     // pre-selected or restricted during application registration. We could
     // use `&[]` instead to not request any scopes, but usually scopes
     // should be requested during registation, in the redirect, or both.
-    todo!()
+    oauth2.get_redirect(cookies, &["user:read"]).unwrap()
 }
 
 // This route, mounted at the application's Redirect URI, uses the
@@ -45,11 +45,11 @@ fn github_login(oauth2: todo!(), cookies: &CookieJar<'_>) -> Redirect {
 // the token.
 #[get("/auth/github")]
 async fn github_callback(
-    token: todo!(),
+    token: TokenResponse<GitHub>,
     cookies: &CookieJar<'_>,
     users: &State<user::Db>,
 ) -> Option<Redirect> {
-    let access_token = todo!();
+    let access_token = token.access_token();
 
     #[derive(Debug, Deserialize)]
     struct GitHubUser {
@@ -97,7 +97,7 @@ async fn github_callback(
     //
     // (private cookie are encrypted using authenticated encryption and key setted in Rocket
     // config)
-    cookies.add_private(todo!("see auth.rs"));
+    cookies.add_private(Cookie::new("user_id", user_id.to_string()));
 
     Some(Redirect::to("/"))
 }
@@ -114,7 +114,7 @@ fn login() -> Template {
 }
 #[get("/logout")]
 fn logout(cookies: &CookieJar<'_>) -> Redirect {
-    cookies.remove_private(todo!());
+    cookies.remove_private(Cookie::from("user_id"));
     Redirect::to("/")
 }
 #[get("/create")]
@@ -124,12 +124,12 @@ fn create_post(user: ConnectedUser) -> Template {
 
 #[get("/reset")]
 fn reset_db(
-    _user: ConnectedAdministrator,
-    _users: &State<user::Db>,
-    _posts: &State<database::post::Db>,
+    user: ConnectedAdministrator,
+    users: &State<user::Db>,
+    posts: &State<database::post::Db>,
 ) -> Redirect {
-    todo!("users.clear(&user);");
-    todo!("posts.clear(&user);");
+    let _ = users.clear(&user);
+    let _ = posts.clear(&user);
     Redirect::to("/")
 }
 #[get("/home")]
@@ -168,7 +168,7 @@ struct CreateForm<'r> {
 
 #[post("/post/create", data = "<data>")]
 async fn perform_create_port(
-    user: todo!(),
+    user: ConnectedUser,
     data: Form<CreateForm<'_>>,
     posts: &State<database::post::Db>,
 ) -> Option<Redirect> {
@@ -204,7 +204,7 @@ struct PerformLike {
 
 #[post("/post/like", data = "<data>")]
 async fn perform_like(
-    user: todo!(),
+    user: ConnectedUser,
     data: Json<PerformLike>,
     posts: &State<database::post::Db>,
 ) -> Option<&'static str> {
