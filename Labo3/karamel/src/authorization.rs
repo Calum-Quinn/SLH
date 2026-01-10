@@ -26,7 +26,21 @@ impl Authorizer {
     pub fn new(pubkey: PublicKey) -> Self {
         let policy = authorizer!(r#"
 
-        allow if user($user), patient($user);
+        // Patients can read and modify their personal information
+        allow if operation("read-patient"), user($u), patient($u);
+        allow if operation("write-patient"), user($u), patient($u);
+
+        // Patients can read reports about them
+        allow if operation("read-report"), user($u), patient($u);
+
+        // Report authors can read their own reports
+        allow if operation("read-report"), user($u), author($u);
+
+        // Doctors can read everyone's personal information
+        allow if operation("read-patient"), user($u), is_doctor($u, true);
+
+        // Only doctors can create new reports, and they must be the author
+        allow if operation("create-report"), user($u), is_doctor($u, true), author($u);
 
         "#);
 

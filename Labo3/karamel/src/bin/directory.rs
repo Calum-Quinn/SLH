@@ -14,6 +14,8 @@ use karamel::model::*;
 use karamel::password::{hash, verify, PWHash};
 use karamel::protocol::{Keypair, Login, LoginResponse, NodeInfo, NodeType, Pubkey};
 use tracing::info;
+use validator::ValidateEmail;
+use zxcvbn::{zxcvbn, Score};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const DATABASE_PATH: &str = "./directory.json";
@@ -99,6 +101,17 @@ async fn register(
     login: Json<Login>,
 ) -> Result<Json<UserID>, Status> {
     let Json(Login { user, password }) = login;
+
+    // C13: Validate that username is a valid email address
+    if !user.validate_email() {
+        return Err(Status::BadRequest);
+    }
+
+    // C14: Reject weak passwords (ZXCVBN score < 3)
+    let password_strength = zxcvbn(&password, &[&user]);
+    if !matches!(password_strength.score(), Score::Three | Score::Four) {
+        return Err(Status::BadRequest);
+    }
 
     let doctor = doctor.unwrap_or_default();
 
