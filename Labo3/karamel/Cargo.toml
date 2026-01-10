@@ -1,0 +1,28 @@
+[package]
+name = "karamel"
+authors = ["Maxime Augier <max@xolus.net>"]
+version = "0.1.0"
+edition = "2021"
+default-run = "karamel"
+
+[dependencies]
+anyhow = "1.0.95"
+argon2 = "0.5.3"
+biscuit-auth = { version = "5.0.0", features = ["serde", "uuid", "chrono"] }
+chrono = { version = "0.4.39", features = ["now"] }
+clap = { version = "4.5.27", features = ["derive"] }
+derive_more = { version = "1.0.0", features = ["constructor", "deref", "display"] }
+inquire = { version = "0.7.5", features = ["chrono", "editor"] }
+rocket = { version = "0.5.1", features = ["uuid", "json"], default-features = false }
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.138"
+smol_str = { version = "0.3.2", features = ["serde"] }
+thiserror = "2.0.11"
+tokio = { version = "1.43.0", features = ["sync"] }
+tokio-test = "0.4.4"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+ureq = { version = "3.0.2", features = ["json"], default-features = false }
+uuid = { version = "1.12.1", features = ["v4"] }
+validator = "0.20.0"
+zxcvbn = { version = "3.1.0", features = ["serde"] }
